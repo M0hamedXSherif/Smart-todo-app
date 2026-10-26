@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Todo | Mohamed Sherif</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06070b;--sf:#0d0f17;--sf2:#141826;--bd:#1c2030;--tx:#e8ecf6;--mu:#8a92a8;--rose:#fb7185;--gold:#fbbf24;--acc:#a78bfa;
+--fs:'Cairo',system-ui,'Segoe UI',Tahoma,sans-serif;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--fs);line-height:1.6;min-height:100vh;overflow-x:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.orb{position:fixed;border-radius:50%;filter:blur(120px);opacity:.2;pointer-events:none;background:var(--acc);transition:background 1s}
+.o1{width:440px;height:440px;top:-140px;right:-120px}.o2{width:360px;height:360px;bottom:-140px;left:-100px}
+.app{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:22px 18px 80px}
+.top{display:flex;align-items:center;gap:12px}
+.top b{margin-inline-end:auto;font-size:17px}
+.back{color:var(--mu);text-decoration:none;font-size:14px;border:1px solid var(--bd);border-radius:10px;padding:6px 14px;transition:.2s}
+.back:hover{color:var(--acc);border-color:var(--acc)}
+ 
+/* Hero: progress ring whose color follows completion */
+.hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:28px;align-items:center;margin:34px 0 28px}
+#ring{position:relative;width:150px;height:150px}
+#ring svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+#ring .tr{fill:none;stroke:var(--bd);stroke-width:10}
+#ring .pg{fill:none;stroke:var(--acc);stroke-width:10;stroke-linecap:round;stroke-dasharray:408;stroke-dashoffset:408;transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1),stroke .8s;filter:drop-shadow(0 0 8px var(--acc))}
+#ring.full .pg{filter:drop-shadow(0 0 14px var(--gold))}
+.pc{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.1}
+.pc b{font-size:34px}.pc span{font-size:12px;color:var(--mu)}
+.sp{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--gold);animation:bs 1s ease-out forwards;pointer-events:none}
+@keyframes bs{from{transform:translate(-50%,-50%)}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy)));opacity:0}}
+h1{margin:0;font-size:clamp(26px,5vw,38px);line-height:1.2}
+.sub{color:var(--mu);margin:2px 0 14px}
+.next{background:var(--sf);border:1px solid var(--bd);border-inline-start:3px solid var(--acc);border-radius:12px;padding:8px 14px;font-size:14px;min-height:46px;transition:border-color .8s}
+.next small{display:block;color:var(--mu);font-size:12px}
+@media (max-width:560px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center}.next{text-align:start;width:100%}}
+ 
+/* Smart add */
+.gb{position:relative;padding:2px;border-radius:18px;overflow:hidden}
+.gb::before{content:"";position:absolute;left:50%;top:50%;width:900px;height:900px;margin:-450px 0 0 -450px;background:conic-gradient(transparent 0 55%,var(--acc),var(--gold),transparent 90%);animation:spin 6s linear infinite}
+.gb:focus-within::before{animation-duration:2s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.add{position:relative;background:var(--sf);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
+.add .r{display:flex;gap:10px}
+#in{flex:1;min-width:0;background:transparent;border:0;outline:0;font-size:17px;padding:4px 0}
+::placeholder{color:#5d657b}
+#go{border:0;border-radius:12px;padding:8px 20px;font-weight:700;cursor:pointer;color:#07080d;background:var(--acc);transition:background .8s,box-shadow .2s}
+#go:hover{box-shadow:0 0 24px -4px var(--acc)}
+.pv{display:flex;gap:6px;flex-wrap:wrap;min-height:26px;font-size:13px;color:var(--mu);align-items:center}
+.shake{animation:sh .35s}@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+ 
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:1px 10px;border-radius:99px;border:1px solid var(--bd);color:var(--mu);background:var(--sf2)}
+.chip.d{color:var(--acc);border-color:color-mix(in srgb,var(--acc) 45%,transparent)}
+.chip.hi{color:var(--rose);border-color:color-mix(in srgb,var(--rose) 45%,transparent)}
+.chip.od{color:#fff;background:var(--rose);border-color:var(--rose)}
+.chip.pop{animation:pop .25s}@keyframes pop{from{transform:scale(.7);opacity:0}}
+ 
+/* Filters */
+.fl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:26px 0 14px}
+.f{cursor:pointer;background:transparent;border:1px solid var(--bd);border-radius:99px;padding:3px 16px;font-size:14px;color:var(--mu)}
+.f[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#07080d;transition:background .8s}
+.clr{margin-inline-start:auto;background:transparent;border:0;color:var(--mu);cursor:pointer;font-size:13px}.clr:hover{color:var(--rose)}
+.tg{flex:1 1 100%;display:flex;gap:6px;flex-wrap:wrap}
+ 
+/* Tasks */
+ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.task{display:flex;gap:14px;align-items:center;background:var(--sf);border:1px solid var(--bd);border-inline-start:3px solid var(--acc);border-radius:14px;padding:12px 14px;transition:opacity .3s,border-color .8s}
+.task.hi{border-inline-start-color:var(--rose)}.task.lo{border-inline-start-color:var(--bd)}
+.task.done{opacity:.5}.task.done .tt{text-decoration:line-through;color:var(--mu)}
+.task.new{animation:pop .35s}
+.ck{width:26px;height:26px;border-radius:50%;border:2px solid var(--mu);background:transparent;cursor:pointer;flex:none;display:grid;place-items:center;transition:.25s;padding:0}
+.ck svg{width:14px;height:14px;stroke:#07080d;stroke-width:3;fill:none;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .3s .1s}
+.task.done .ck{background:var(--acc);border-color:var(--acc)}.task.done .ck svg{stroke-dashoffset:0}
+.tb{flex:1;min-width:0}.tt{font-size:16px;word-break:break-word}
+.tt[contenteditable="true"]{outline:1px dashed var(--acc);outline-offset:4px;border-radius:4px}
+.tm{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.x{background:transparent;border:0;color:var(--mu);cursor:pointer;font-size:20px;line-height:1;padding:2px 8px;border-radius:8px}.x:hover{color:var(--rose);background:var(--sf2)}
+.empty{text-align:center;color:var(--mu);padding:46px 12px;border:1px dashed var(--bd);border-radius:16px}
+.empty b{display:block;color:var(--tx);font-size:18px}
+ 
+#toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);opacity:0;pointer-events:none;background:var(--sf2);border:1px solid var(--bd);border-radius:14px;padding:8px 10px 8px 18px;display:flex;align-items:center;gap:12px;transition:.3s;z-index:5;box-shadow:0 14px 40px -12px #000}
+#toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#toast button{background:transparent;border:0;color:var(--acc);font-weight:700;cursor:pointer;padding:4px 8px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="orb o1"></div><div class="orb o2"></div>
+<div class="app">
+ 
+<div class="top"><b>Smart Todo</b><a class="back" href="https://m0hamedxsherif.github.io/My-portfolio/">Back to portfolio</a></div>
+ 
+<div class="hero">
+  <div id="ring"><svg viewBox="0 0 150 150"><circle class="tr" cx="75" cy="75" r="65"/><circle class="pg" id="pg" cx="75" cy="75" r="65"/></svg>
+    <div class="pc"><b id="pct">0%</b><span id="cnt">0 of 0</span></div></div>
+  <div><h1 id="hi">Hello</h1><p class="sub" id="day"></p>
+    <div class="next" id="next"></div></div>
+</div>
+ 
+<div class="gb"><div class="add">
+  <div class="r"><input id="in" dir="auto" autocomplete="off" placeholder="Try: Call client tomorrow 5pm !high #work" aria-label="New task"><button id="go">Add</button></div>
+  <div class="pv" id="pv">Type a date, time, !high or #tag and I’ll pick it up</div>
+</div></div>
+ 
+<div class="fl" id="fl"></div>
+<ul id="list"></ul>
+</div>
+<div id="toast" role="status"><span id="tm"></span><button id="ub">Undo</button></div>
+ 
+<script>
+var $=function(s){return document.querySelector(s)};
+var KEY="smart_todos_v1",tasks=[],filter="all",tagf=null,undo=null,tT,wasFull=false,PR={high:0,med:1,low:2};
+ 
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function mk(title,o){o=o||{};return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:title,pri:o.pri||"med",due:o.due||null,hasTime:!!o.hasTime,tags:o.tags||[],done:false,doneAt:0,ts:Date.now()}}
+ 
+/* Smart parser: dates, times, priority and #tags (English + Arabic) */
+function parse(s){
+  var o={pri:"med",due:null,hasTime:false,tags:[]},t=" "+s+" ",d=null,dw=false,h=null,m=0;
+  t=t.replace(/#([\p{L}\d_-]+)/gu,function(_,g){o.tags.push(g.toLowerCase());return" "});
+  t=t.replace(/!(high|urgent|low|عاجل|مهم|عادي)(?![\p{L}])/giu,function(_,p){p=p.toLowerCase();o.pri=(p==="low"||p==="عادي")?"low":"high";return" "});
+  t=t.replace(/(?<![\p{L}])(today|tonight|tomorrow|tmrw|اليوم|النهارده|النهاردة|بكرة|بكره|غدا|غداً)(?![\p{L}])/iu,function(_,w){dw=true;d=new Date();if(/tomorrow|tmrw|بكر|غد/i.test(w))d.setDate(d.getDate()+1);return" "});
+  t=t.replace(/(?<![\d:])(\d{1,2})(?::(\d{2}))?\s?(am|pm|ص|م)(?![\p{L}])/iu,function(_,a,b,c){h=(+a)%12;if(/pm|م/i.test(c))h+=12;m=+(b||0);return" "});
+  if(h===null)t=t.replace(/(?<!\d)([01]?\d|2[0-3]):([0-5]\d)(?!\d)/,function(_,a,b){h=+a;m=+b;return" "});
+  if(h!==null){d=d||new Date();d.setHours(h,m,0,0);if(!dw&&d.getTime()<Date.now())d.setDate(d.getDate()+1);o.hasTime=true}
+  else if(d)d.setHours(23,59,0,0);
+  if(d)o.due=d.getTime();
+  o.title=t.replace(/\s+/g," ").replace(/\s(at|by|on|الساعة)$/i,"").trim()||s.trim();
+  return o}
+ 
+function dueLabel(n){
+  if(!n.due)return"";var d=new Date(n.due),now=new Date();
+  var s0=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime(),dd=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),df=Math.round((dd-s0)/864e5);
+  var day=df===0?"Today":df===1?"Tomorrow":df===-1?"Yesterday":d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+  return day+(n.hasTime?" "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}):"")}
+function over(n){return!n.done&&n.due&&n.due<Date.now()}
+function eod(){var d=new Date();d.setHours(23,59,59,999);return d.getTime()}
+ 
+/* Smart order: overdue first, then soonest due, then priority */
+function ord(a,b){
+  if(a.done!==b.done)return a.done-b.done;if(a.done)return b.doneAt-a.doneAt;
+  var oa=!!over(a),ob=!!over(b);if(oa!==ob)return ob-oa;
+  var da=a.due||1e15,db=b.due||1e15;if(da!==db)return da-db;
+  if(PR[a.pri]!==PR[b.pri])return PR[a.pri]-PR[b.pri];return b.ts-a.ts}
+ 
+/* Smart color: violet -> cyan -> gold as completion grows */
+var ST=[[167,139,250],[34,211,238],[251,191,36]];
+function pcol(p){var lo=p<.6,x=lo?p/.6:(p-.6)/.4,a=ST[lo?0:1],b=ST[lo?1:2];return"rgb("+a.map(function(v,i){return Math.round(v+(b[i]-v)*x)}).join(",")+")"}
+ 
+function load(){try{var d=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(d))return d}catch(e){}return null}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(tasks))}catch(e){}}
+function seed(){
+  var a=new Date();a.setHours(21,0,0,0);var b=new Date();b.setDate(b.getDate()+1);b.setHours(17,0,0,0);
+  return[mk("Review project deadlines",{pri:"high",due:a.getTime(),hasTime:true,tags:["work"]}),
+    mk("Try typing: Call client tomorrow 5pm !high #work",{due:b.getTime(),hasTime:true,tags:["demo"]}),
+    mk("اقرأ عشرين صفحة من كتاب",{pri:"low",tags:["study"]})]}
+ 
+function render(freshId){
+  var total=tasks.length,done=tasks.filter(function(n){return n.done}).length,p=total?done/total:0,col=pcol(p);
+  document.documentElement.style.setProperty("--acc",col);
+  $("#pg").style.strokeDashoffset=408*(1-p);
+  $("#pct").textContent=Math.round(p*100)+"%";$("#cnt").textContent=done+" of "+total;
+  var full=total>0&&done===total;$("#ring").classList.toggle("full",full);
+  if(full&&!wasFull)burst();wasFull=full;
+  var h=new Date().getHours();
+  $("#hi").textContent=full?"All done. Nice work.":(h<12?"Good morning":h<18?"Good afternoon":"Good evening");
+  $("#day").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  var nx=tasks.filter(function(n){return!n.done}).sort(ord)[0];
+  $("#next").innerHTML=nx?'<small>Up next</small>'+esc(nx.title)+(nx.due?' <span class="chip '+(over(nx)?'od':'d')+'">'+dueLabel(nx)+'</span>':''):'<small>Up next</small>Nothing pending';
+ 
+  var tags={};tasks.forEach(function(n){n.tags.forEach(function(t){tags[t]=1})});
+  if(tagf&&!tags[tagf])tagf=null;
+  var fs=[["all","All"],["today","Today"],["upcoming","Upcoming"],["done","Done"]];
+  $("#fl").innerHTML=fs.map(function(f){return'<button class="f" data-f="'+f[0]+'" aria-pressed="'+(filter===f[0])+'">'+f[1]+'</button>'}).join("")
+    +(done?'<button class="clr" id="clr">Clear completed</button>':'')
+    +(Object.keys(tags).length?'<div class="tg">'+Object.keys(tags).map(function(t){return'<button class="f" data-t="'+esc(t)+'" aria-pressed="'+(tagf===t)+'">#'+esc(t)+'</button>'}).join("")+'</div>':'');
+ 
+  var e=eod(),list=tasks.filter(function(n){
+    if(tagf&&n.tags.indexOf(tagf)<0)return false;
+    return filter==="all"||(filter==="done"?n.done:filter==="today"?(!n.done&&n.due&&n.due<=e):(!n.done&&n.due&&n.due>e))
+  }).sort(ord);
+  $("#list").innerHTML=list.length?list.map(function(n){
+    return'<li class="task'+(n.done?' done':'')+(n.pri==="high"?' hi':n.pri==="low"?' lo':'')+(n.id===freshId?' new':'')+'" data-id="'+n.id+'">'
+    +'<button class="ck" role="checkbox" aria-checked="'+n.done+'" aria-label="Complete task"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 4.5"/></svg></button>'
+    +'<div class="tb"><div class="tt" dir="auto" title="Double-click to edit">'+esc(n.title)+'</div>'
+    +((n.due||n.pri==="high"||n.tags.length)?'<div class="tm">'+(n.due?'<span class="chip '+(over(n)?'od':'d')+'">'+dueLabel(n)+'</span>':'')+(n.pri==="high"?'<span class="chip hi">High</span>':'')+n.tags.map(function(t){return'<span class="chip">#'+esc(t)+'</span>'}).join("")+'</div>':'')+'</div>'
+    +'<button class="x" aria-label="Delete task">×</button></li>'
+  }).join(""):'<li class="empty"><b>'+(total?'Nothing here':'No tasks yet')+'</b>'+(total?'Try another filter.':'Type one above. Dates and tags are picked up as you write.')+'</li>';
+}
+ 
+function burst(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;var r=$("#ring");
+  for(var i=0;i<30;i++){var s=document.createElement("i");s.className="sp";var a=Math.random()*6.283,d=70+Math.random()*90;
+    s.style.setProperty("--dx",Math.cos(a)*d+"px");s.style.setProperty("--dy",Math.sin(a)*d+"px");r.appendChild(s);
+    (function(x){setTimeout(function(){x.remove()},1100)})(s)}}
+ 
+function toast(msg,fn){$("#tm").textContent=msg;undo=fn||null;$("#ub").style.display=fn?"":"none";$("#toast").classList.add("on");clearTimeout(tT);tT=setTimeout(function(){$("#toast").classList.remove("on");undo=null},5000)}
+$("#ub").onclick=function(){if(undo)undo();$("#toast").classList.remove("on");undo=null};
+ 
+/* Live preview of what the parser understood */
+$("#in").addEventListener("input",function(){
+  var v=this.value.trim();if(!v){$("#pv").textContent="Type a date, time, !high or #tag and I’ll pick it up";return}
+  var o=parse(v),c=[];
+  if(o.due)c.push('<span class="chip d pop">'+dueLabel(o)+'</span>');
+  if(o.pri==="high")c.push('<span class="chip hi pop">High priority</span>');
+  if(o.pri==="low")c.push('<span class="chip pop">Low priority</span>');
+  o.tags.forEach(function(t){c.push('<span class="chip pop">#'+esc(t)+'</span>')});
+  $("#pv").innerHTML=c.length?c.join(" "):"No date or tag detected"});
+ 
+function add(){
+  var v=$("#in").value.trim();
+  if(!v){var g=document.querySelector(".gb");g.classList.remove("shake");void g.offsetWidth;g.classList.add("shake");$("#in").focus();return}
+  var o=parse(v),n=mk(o.title,o);tasks.push(n);save();render(n.id);
+  $("#in").value="";$("#in").dispatchEvent(new Event("input"));$("#in").focus()}
+$("#go").onclick=add;
+$("#in").addEventListener("keydown",function(e){if(e.key==="Enter")add()});
+document.addEventListener("keydown",function(e){if(e.key==="/"&&document.activeElement.tagName!=="INPUT"&&!document.activeElement.isContentEditable){e.preventDefault();$("#in").focus()}});
+ 
+$("#fl").onclick=function(e){
+  var f=e.target.closest("[data-f]"),t=e.target.closest("[data-t]");
+  if(f){filter=f.dataset.f;render()}else if(t){tagf=tagf===t.dataset.t?null:t.dataset.t;render()}
+  else if(e.target.id==="clr"){var rm=tasks.filter(function(n){return n.done});tasks=tasks.filter(function(n){return!n.done});save();render();toast(rm.length+" completed removed",function(){tasks=tasks.concat(rm);save();render()})}};
+ 
+$("#list").onclick=function(e){
+  var li=e.target.closest(".task");if(!li)return;var n=tasks.filter(function(x){return x.id===li.dataset.id})[0];if(!n)return;
+  if(e.target.closest(".ck")){n.done=!n.done;n.doneAt=n.done?Date.now():0;save();render()}
+  else if(e.target.closest(".x")){var i=tasks.indexOf(n);tasks.splice(i,1);save();render();toast("Task deleted",function(){tasks.splice(i,0,n);save();render()})}};
+$("#list").ondblclick=function(e){
+  var t=e.target.closest(".tt");if(!t)return;var li=t.closest(".task"),n=tasks.filter(function(x){return x.id===li.dataset.id})[0];if(!n)return;
+  t.contentEditable="true";t.focus();
+  function fin(){t.contentEditable="false";var v=t.innerText.trim();if(v)n.title=v;save();render()}
+  t.addEventListener("blur",fin,{once:true});t.addEventListener("keydown",function(k){if(k.key==="Enter"){k.preventDefault();t.blur()}})};
+ 
+tasks=load();if(!tasks){tasks=seed();save()}
+wasFull=tasks.length>0&&tasks.every(function(n){return n.done});
+render();setInterval(function(){if(!document.activeElement.isContentEditable)render()},60000);
+</script>
+</body>
+</html>
